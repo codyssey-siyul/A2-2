@@ -1,5 +1,6 @@
 import argparse
 from src.fetcher import fetch_rss_news
+from src.storage import save_raw_news
 
 
 def main():
@@ -36,7 +37,10 @@ def main():
         print(f"날짜: {news['published']}")
         print(f"링크: {news['link']}")
 
+    file_path = save_raw_news(news_list)
+
     print(f"\n수집 완료: {len(news_list)}건")
+    print(f"Raw 데이터 저장 완료: {file_path}")
 
 
 if __name__ == "__main__":
