@@ -28,3 +28,43 @@ def save_raw_news(news_list):
             )
 
     return file_path
+
+def load_jsonl(file_path):
+    """JSONL 파일을 읽어 뉴스 목록으로 반환합니다."""
+
+    news_list = []
+
+    with open(file_path, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+
+            if not line:
+                continue
+
+            news_list.append(json.loads(line))
+
+    return news_list
+
+
+def save_clean_news(news_list, source_file_path):
+    """정제된 뉴스 데이터를 Clean JSONL 파일로 저장합니다."""
+
+    clean_data_dir = Path("data/clean")
+    clean_data_dir.mkdir(parents=True, exist_ok=True)
+
+    source_file_path = Path(source_file_path)
+
+    # Raw 파일 이름의 시간 정보를 그대로 사용
+    clean_file_name = source_file_path.name.replace(
+        "news_raw_", "news_clean_"
+    )
+
+    clean_file_path = clean_data_dir / clean_file_name
+
+    with open(clean_file_path, "w", encoding="utf-8") as file:
+        for news in news_list:
+            file.write(
+                json.dumps(news, ensure_ascii=False) + "\n"
+            )
+
+    return clean_file_path
