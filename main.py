@@ -13,6 +13,7 @@ from src.cleaner import clean_news_list
 from src.crawler import fetch_policy_news
 from src.summarizer import summarize_news_list
 from src.analyzer import analyze_news_mock
+from src.visualizer import create_news_charts
 
 
 def main():
@@ -51,6 +52,12 @@ def main():
     subparsers.add_parser(
         "analyze",
         help="요약된 뉴스 데이터를 종합 분석합니다."
+    )
+
+    # 뉴스 차트 생성 명령어
+    subparsers.add_parser(
+        "chart",
+        help="뉴스 데이터를 시각화하여 차트를 생성합니다."
     )
 
     crawl_parser = subparsers.add_parser(
@@ -191,6 +198,35 @@ def main():
         print(f"평균 중요도: {analysis_result['average_importance']}")
         print(f"종합 분석 완료")
         print(f"Analysis 데이터 저장 완료: {analysis_file_path}")
+
+    # Chart
+    elif args.command == "chart":
+        summary_files = list(
+            Path("data/summary").glob("news_summary_*.jsonl")
+        )
+
+        if not summary_files:
+            print("차트를 생성할 Summary 데이터가 없습니다.")
+            return
+
+        # 파일명에 포함된 날짜/시간을 기준으로 가장 최근 Summary 파일 선택
+        latest_summary_file = max(
+            summary_files,
+            key=lambda path: path.name
+        )
+
+        summarized_news_list = load_jsonl(
+            latest_summary_file
+        )
+
+        chart_paths = create_news_charts(
+            summarized_news_list
+        )
+
+        print(f"차트 대상 파일: {latest_summary_file}")
+        print(f"차트 대상 뉴스: {len(summarized_news_list)}건")
+        print(f"출처별 차트 저장 완료: {chart_paths['source_chart']}")
+        print(f"두 번째 차트 저장 완료: {chart_paths['second_chart']}")
 
     elif args.command == "crawl":
         print(f"웹 크롤링 시작 - 최대 {args.limit}건")
