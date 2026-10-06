@@ -7,10 +7,12 @@ from src.storage import (
     load_jsonl,
     save_clean_news,
     save_summary_news,
+    save_analysis_result,
 )
 from src.cleaner import clean_news_list
 from src.crawler import fetch_policy_news
 from src.summarizer import summarize_news_list
+from src.analyzer import analyze_news_mock
 
 
 def main():
@@ -43,6 +45,12 @@ def main():
     subparsers.add_parser(
         "summarize",
         help="정제된 뉴스 데이터를 AI 요약합니다."
+    )
+
+    # 뉴스 종합 분석 명령어
+    subparsers.add_parser(
+        "analyze",
+        help="요약된 뉴스 데이터를 종합 분석합니다."
     )
 
     crawl_parser = subparsers.add_parser(
@@ -146,6 +154,43 @@ def main():
         print(f"요약 대상 뉴스: {len(clean_news_list)}건")
         print(f"요약 완료: {len(summarized_news_list)}건")
         print(f"Summary 데이터 저장 완료: {summary_file_path}")
+
+    # Analyze
+    elif args.command == "analyze":
+        summary_files = list(
+            Path("data/summary").glob("news_summary_*.jsonl")
+        )
+
+        if not summary_files:
+            print("분석할 Summary 데이터가 없습니다.")
+            return
+
+        # 파일명에 포함된 날짜/시간을 기준으로 가장 최근 Summary 파일 선택
+        latest_summary_file = max(
+            summary_files,
+            key=lambda path: path.name
+        )
+
+        summarized_news_list = load_jsonl(
+            latest_summary_file
+        )
+
+        # 현재는 Mock AI 분석 사용
+        # TODO: OpenAI API 연결 시 analyzer.py의 Mock 부분을 실제 API 호출로 교체
+        analysis_result = analyze_news_mock(
+            summarized_news_list
+        )
+
+        analysis_file_path = save_analysis_result(
+            analysis_result,
+            latest_summary_file
+        )
+
+        print(f"분석 대상 파일: {latest_summary_file}")
+        print(f"분석 대상 뉴스: {len(summarized_news_list)}건")
+        print(f"평균 중요도: {analysis_result['average_importance']}")
+        print(f"종합 분석 완료")
+        print(f"Analysis 데이터 저장 완료: {analysis_file_path}")
 
     elif args.command == "crawl":
         print(f"웹 크롤링 시작 - 최대 {args.limit}건")

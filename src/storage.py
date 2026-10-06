@@ -91,3 +91,30 @@ def save_summary_news(news_list, source_file_path):
             )
 
     return summary_file_path
+
+def save_analysis_result(analysis_result, source_file_path):
+    """뉴스 종합 분석 결과를 JSON 파일로 저장합니다."""
+
+    analysis_data_dir = Path("data/analysis")
+    analysis_data_dir.mkdir(parents=True, exist_ok=True)
+
+    source_file_path = Path(source_file_path)
+
+    # Summary 파일 이름의 시간 정보를 그대로 사용
+    analysis_file_name = source_file_path.name.replace(
+        "news_summary_", "news_analysis_"
+    ).replace(
+        ".jsonl", ".json"
+    )
+
+    analysis_file_path = analysis_data_dir / analysis_file_name
+
+    with open(analysis_file_path, "w", encoding="utf-8") as file:
+        json.dump(
+            analysis_result,
+            file,
+            ensure_ascii=False,
+            indent=2
+        )
+
+    return analysis_file_path
