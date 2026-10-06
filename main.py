@@ -16,6 +16,7 @@ from src.summarizer import summarize_news_list
 from src.analyzer import analyze_news_mock
 from src.visualizer import create_news_charts
 from src.reporter import generate_markdown_report, save_markdown_report
+from src.exporter import export_news_data
 
 
 def main():
@@ -66,6 +67,12 @@ def main():
     subparsers.add_parser(
         "report",
         help="뉴스 분석 결과를 종합하여 리포트를 생성합니다."
+    )
+
+    # 뉴스 데이터 내보내기 명령어
+    subparsers.add_parser(
+        "export",
+        help="뉴스 데이터를 CSV와 JSONL 형식으로 내보냅니다."
     )
 
     crawl_parser = subparsers.add_parser(
@@ -296,6 +303,38 @@ def main():
         print("=" * 60)
 
         print(f"\n리포트 생성 완료: {report_file_path}")
+
+    # Export
+    elif args.command == "export":
+        summary_files = list(
+            Path("data/summary").glob("news_summary_*.jsonl")
+        )
+
+        if not summary_files:
+            print("내보낼 Summary 데이터가 없습니다.")
+            return
+
+        # 파일명에 포함된 날짜/시간 기준으로 가장 최근 Summary 파일 선택
+        latest_summary_file = max(
+            summary_files,
+            key=lambda path: path.name
+        )
+
+        # Summary 데이터 로드
+        summarized_news_list = load_jsonl(
+            latest_summary_file
+        )
+
+        # CSV + JSONL 내보내기
+        export_result = export_news_data(
+            summarized_news_list,
+            latest_summary_file
+        )
+
+        print(f"Export 대상 파일: {latest_summary_file}")
+        print(f"Export 대상 뉴스: {len(summarized_news_list)}건")
+        print(f"CSV 저장 완료: {export_result['csv']}")
+        print(f"JSONL 저장 완료: {export_result['jsonl']}")
 
     elif args.command == "crawl":
         print(f"웹 크롤링 시작 - 최대 {args.limit}건")
