@@ -2,9 +2,15 @@ import argparse
 from pathlib import Path
 
 from src.fetcher import fetch_rss_news
-from src.storage import save_raw_news, load_jsonl, save_clean_news
+from src.storage import (
+    save_raw_news,
+    load_jsonl,
+    save_clean_news,
+    save_summary_news,
+)
 from src.cleaner import clean_news_list
 from src.crawler import fetch_policy_news
+from src.summarizer import summarize_news_list
 
 
 def main():
@@ -31,6 +37,12 @@ def main():
     subparsers.add_parser(
         "clean",
         help="수집한 Raw 뉴스 데이터를 정제합니다."
+    )
+
+    # 뉴스 요약 명령어
+    subparsers.add_parser(
+        "summarize",
+        help="정제된 뉴스 데이터를 AI 요약합니다."
     )
 
     crawl_parser = subparsers.add_parser(
@@ -100,6 +112,40 @@ def main():
         print(f"Raw 데이터: {len(raw_news_list)}건")
         print(f"Clean 데이터: {len(cleaned_news_list)}건")
         print(f"Clean 데이터 저장 완료: {clean_file_path}")
+
+    # Summarize
+    elif args.command == "summarize":
+        clean_files = list(
+            Path("data/clean").glob("news_clean_*.jsonl")
+        )
+
+        if not clean_files:
+            print("요약할 Clean 데이터가 없습니다.")
+            return
+
+        # 파일명에 포함된 날짜/시간을 기준으로 가장 최근 Clean 파일 선택
+        latest_clean_file = max(
+            clean_files,
+            key=lambda path: path.name
+        )
+
+        clean_news_list = load_jsonl(latest_clean_file)
+
+        # 현재는 Mock 요약 사용
+        # TODO: OpenAI API 연결 시 summarizer.py의 Mock 부분을 실제 API 호출로 교체
+        summarized_news_list = summarize_news_list(
+            clean_news_list
+        )
+
+        summary_file_path = save_summary_news(
+            summarized_news_list,
+            latest_clean_file
+        )
+
+        print(f"요약 대상 파일: {latest_clean_file}")
+        print(f"요약 대상 뉴스: {len(clean_news_list)}건")
+        print(f"요약 완료: {len(summarized_news_list)}건")
+        print(f"Summary 데이터 저장 완료: {summary_file_path}")
 
     elif args.command == "crawl":
         print(f"웹 크롤링 시작 - 최대 {args.limit}건")

@@ -68,3 +68,26 @@ def save_clean_news(news_list, source_file_path):
             )
 
     return clean_file_path
+
+def save_summary_news(news_list, source_file_path):
+    """요약된 뉴스 데이터를 Summary JSONL 파일로 저장합니다."""
+
+    summary_data_dir = Path("data/summary")
+    summary_data_dir.mkdir(parents=True, exist_ok=True)
+
+    source_file_path = Path(source_file_path)
+
+    # Clean 파일 이름의 시간 정보를 그대로 사용
+    summary_file_name = source_file_path.name.replace(
+        "news_clean_", "news_summary_"
+    )
+
+    summary_file_path = summary_data_dir / summary_file_name
+
+    with open(summary_file_path, "w", encoding="utf-8") as file:
+        for news in news_list:
+            file.write(
+                json.dumps(news, ensure_ascii=False) + "\n"
+            )
+
+    return summary_file_path
