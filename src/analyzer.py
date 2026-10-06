@@ -54,6 +54,12 @@ def analyze_news_mock(news_list):
         "실제 API 연결 후 뉴스 전체의 흐름을 분석합니다."
     ]
 
+    keywords = [
+        "Mock 키워드 1",
+        "Mock 키워드 2",
+        "Mock 키워드 3"
+    ]
+
     insights = [
         "현재는 Mock 인사이트입니다.",
         "실제 API 연결 후 뉴스 데이터를 기반으로 핵심 인사이트를 생성합니다."
@@ -71,6 +77,7 @@ def analyze_news_mock(news_list):
         "average_importance": average_importance,
         "major_issues": major_issues,
         "trends": trends,
+        "keywords": keywords,
         "insights": insights,
     }
 

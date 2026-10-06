@@ -1,4 +1,5 @@
 import argparse
+import json
 from pathlib import Path
 
 from src.fetcher import fetch_rss_news
@@ -14,6 +15,7 @@ from src.crawler import fetch_policy_news
 from src.summarizer import summarize_news_list
 from src.analyzer import analyze_news_mock
 from src.visualizer import create_news_charts
+from src.reporter import generate_markdown_report, save_markdown_report
 
 
 def main():
@@ -58,6 +60,12 @@ def main():
     subparsers.add_parser(
         "chart",
         help="뉴스 데이터를 시각화하여 차트를 생성합니다."
+    )
+
+    # 뉴스 리포트 생성 명령어
+    subparsers.add_parser(
+        "report",
+        help="뉴스 분석 결과를 종합하여 리포트를 생성합니다."
     )
 
     crawl_parser = subparsers.add_parser(
@@ -227,6 +235,67 @@ def main():
         print(f"차트 대상 뉴스: {len(summarized_news_list)}건")
         print(f"출처별 차트 저장 완료: {chart_paths['source_chart']}")
         print(f"두 번째 차트 저장 완료: {chart_paths['second_chart']}")
+
+    # Report
+    elif args.command == "report":
+        summary_files = list(
+            Path("data/summary").glob("news_summary_*.jsonl")
+        )
+
+        analysis_files = list(
+            Path("data/analysis").glob("news_analysis_*.json")
+        )
+
+        if not summary_files:
+            print("리포트를 생성할 Summary 데이터가 없습니다.")
+            return
+
+        if not analysis_files:
+            print("리포트를 생성할 Analysis 데이터가 없습니다.")
+            return
+
+        # 파일명 기준으로 가장 최근 Summary / Analysis 파일 선택
+        latest_summary_file = max(
+            summary_files,
+            key=lambda path: path.name
+        )
+
+        latest_analysis_file = max(
+            analysis_files,
+            key=lambda path: path.name
+        )
+
+        # Summary 데이터 로드
+        summarized_news_list = load_jsonl(
+            latest_summary_file
+        )
+
+        # Analysis JSON 로드
+        with open(
+            latest_analysis_file,
+            "r",
+            encoding="utf-8"
+        ) as file:
+            analysis_result = json.load(file)
+
+        # Markdown 리포트 생성
+        report_text = generate_markdown_report(
+            summarized_news_list,
+            analysis_result
+        )
+
+        # Markdown 파일 저장
+        report_file_path = save_markdown_report(
+            report_text,
+            latest_summary_file
+        )
+
+        # 과제 요구사항: 콘솔 출력
+        print("\n" + "=" * 60)
+        print(report_text)
+        print("=" * 60)
+
+        print(f"\n리포트 생성 완료: {report_file_path}")
 
     elif args.command == "crawl":
         print(f"웹 크롤링 시작 - 최대 {args.limit}건")
