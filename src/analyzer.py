@@ -1,11 +1,19 @@
 from collections import Counter
 
+import os
+import requests
+from dotenv import load_dotenv
 
-def analyze_news_mock(news_list):
+from src.config import load_config
+from src.logger import setup_logger
+
+
+logger = setup_logger()
+
+
+def analyze_news(news_list):
     """
-    요약된 뉴스 전체를 분석합니다.
-
-    현재는 OpenAI API 없이 전체 파이프라인을 테스트하기 위한 임시 함수입니다.
+    요약된 뉴스 전체를 AI로 분석합니다.
     """
 
     # ------------------------------------------------------------
@@ -39,37 +47,97 @@ def analyze_news_mock(news_list):
     else:
         average_importance = 0
 
-    # ============================================================
-    # [MOCK START]
-    # 나중에 OpenAI API 연결 시 이 부분을 실제 AI 분석 코드로 교체
-    # ============================================================
+    # AI 분석에 사용할 뉴스 요약 데이터 구성
+    news_text = "\n".join(
+        f"- 제목: {news.get('title', '')}\n"
+        f"  요약: {news.get('summary', '')}\n"
+        f"  카테고리: {news.get('category', '')}"
+        for news in news_list
+    )
 
-    major_issues = [
-        "현재는 Mock 분석 결과입니다.",
-        "실제 API 연결 후 주요 뉴스 이슈를 분석합니다."
-    ]
+    load_dotenv()
 
-    trends = [
-        "현재는 Mock 트렌드 분석입니다.",
-        "실제 API 연결 후 뉴스 전체의 흐름을 분석합니다."
-    ]
+    api_key = os.getenv("OPENAI_API_KEY")
+    config = load_config()
 
-    keywords = [
-        "Mock 키워드 1",
-        "Mock 키워드 2",
-        "Mock 키워드 3"
-    ]
+    prompt = f"""
+다음 뉴스들을 종합적으로 분석해주세요.
 
-    insights = [
-        "현재는 Mock 인사이트입니다.",
-        "실제 API 연결 후 뉴스 데이터를 기반으로 핵심 인사이트를 생성합니다."
-    ]
+{news_text}
 
-    # ============================================================
-    # [MOCK END]
-    # OpenAI API 연결 시 여기까지 교체
-    # ============================================================
+다음 형식으로만 답변해주세요.
 
+주요이슈: 전체 뉴스에서 중요한 이슈를 2~3개로 정리
+트렌드: 뉴스 전체에서 나타나는 주요 흐름을 2~3개로 정리
+키워드: 핵심 키워드 5개
+인사이트: 뉴스 데이터를 바탕으로 알 수 있는 시사점을 2~3개로 정리
+"""
+    response = requests.post(
+        "https://copa.codyssey.kr/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}"
+        },
+        json={
+            "model": config["ai"]["model"],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        },
+        timeout=config["request"]["timeout"],
+    )
+
+    response.raise_for_status()
+
+    ai_result = response.json()["choices"][0]["message"]["content"]
+
+    major_issues = []
+    trends = []
+    keywords = []
+    insights = []
+
+    current_section = None
+
+    for line in ai_result.splitlines():
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if line == "주요이슈:":
+            current_section = "major_issues"
+            continue
+
+        elif line == "트렌드:":
+            current_section = "trends"
+            continue
+
+        elif line == "키워드:":
+            current_section = "keywords"
+            continue
+
+        elif line == "인사이트:":
+            current_section = "insights"
+            continue
+
+        if current_section == "major_issues":
+            major_issues.append(line.lstrip("- ").strip())
+
+        elif current_section == "trends":
+            trends.append(line.lstrip("- ").strip())
+
+        elif current_section == "keywords":
+            keywords.extend(
+                keyword.strip().lstrip("- ").strip()
+                for keyword in line.split(",")
+                if keyword.strip()
+            )
+
+        elif current_section == "insights":
+            insights.append(line.lstrip("- ").strip())
+    
     analysis_result = {
         "total_news": total_news,
         "source_counts": dict(source_counts),

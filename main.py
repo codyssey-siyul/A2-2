@@ -13,7 +13,7 @@ from src.storage import (
 from src.cleaner import clean_news_list
 from src.crawler import fetch_policy_news
 from src.summarizer import summarize_news_list
-from src.analyzer import analyze_news_mock
+from src.analyzer import analyze_news
 from src.visualizer import create_news_charts
 from src.reporter import generate_markdown_report, save_markdown_report
 from src.exporter import export_news_data
@@ -77,9 +77,21 @@ def main():
     )
 
     # 뉴스 종합 분석 명령어
-    subparsers.add_parser(
+    analyze_parser = subparsers.add_parser(
         "analyze",
         help="요약된 뉴스 데이터를 종합 분석합니다."
+    )
+
+    analyze_parser.add_argument(
+        "--category",
+        type=str,
+        help="특정 카테고리의 뉴스만 분석합니다."
+    )
+
+    analyze_parser.add_argument(
+        "--date",
+        type=str,
+        help="특정 날짜의 뉴스만 분석합니다. (YYYY-MM-DD)"
     )
 
     # 뉴스 차트 생성 명령어
@@ -260,7 +272,7 @@ def main():
         logger.info(
             f"Summary 데이터 저장 완료: {summary_file_path}"
         )
-        
+
     # Analyze
     elif args.command == "analyze":
         summary_files = list(
@@ -281,15 +293,52 @@ def main():
             latest_summary_file
         )
 
-        # 현재는 Mock AI 분석 사용
-        # TODO: OpenAI API 연결 시 analyzer.py의 Mock 부분을 실제 API 호출로 교체
-        analysis_result = analyze_news_mock(
+        # --category 옵션: 특정 카테고리만 선택
+        if args.category:
+            summarized_news_list = [
+                news
+                for news in summarized_news_list
+                if news.get("category") == args.category
+            ]
+
+            if not summarized_news_list:
+                logger.warning(
+                    f"해당 카테고리의 뉴스가 없습니다: {args.category}"
+                )
+                return
+
+        # --date 옵션: 특정 날짜의 뉴스만 선택
+        if args.date:
+            summarized_news_list = [
+                news
+                for news in summarized_news_list
+                if news.get("published", "").startswith(args.date)
+            ]
+
+            if not summarized_news_list:
+                logger.warning(
+                    f"해당 날짜의 뉴스가 없습니다: {args.date}"
+                )
+                return
+
+        analysis_result = analyze_news(
             summarized_news_list
         )
 
+        suffix_parts = []
+
+        if args.category:
+            suffix_parts.append(args.category)
+
+        if args.date:
+            suffix_parts.append(args.date)
+
+        suffix = "_".join(suffix_parts) if suffix_parts else None
+
         analysis_file_path = save_analysis_result(
             analysis_result,
-            latest_summary_file
+            latest_summary_file,
+            suffix
         )
 
         logger.info(f"분석 대상 파일: {latest_summary_file}")

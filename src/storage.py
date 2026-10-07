@@ -92,7 +92,11 @@ def save_summary_news(news_list, source_file_path):
 
     return summary_file_path
 
-def save_analysis_result(analysis_result, source_file_path):
+def save_analysis_result(
+    analysis_result,
+    source_file_path,
+    suffix=None
+):
     """뉴스 종합 분석 결과를 JSON 파일로 저장합니다."""
 
     analysis_data_dir = Path("data/analysis")
@@ -106,6 +110,12 @@ def save_analysis_result(analysis_result, source_file_path):
     ).replace(
         ".jsonl", ".json"
     )
+
+    if suffix:
+        analysis_file_name = analysis_file_name.replace(
+            ".json",
+            f"_{suffix}.json"
+        )
 
     analysis_file_path = analysis_data_dir / analysis_file_name
 
