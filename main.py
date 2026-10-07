@@ -53,9 +53,27 @@ def main():
     )
 
     # 뉴스 요약 명령어
-    subparsers.add_parser(
+    summarize_parser = subparsers.add_parser(
         "summarize",
         help="정제된 뉴스 데이터를 AI 요약합니다."
+    )
+
+    summarize_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="전체 뉴스를 AI 요약합니다."
+    )
+
+    summarize_parser.add_argument(
+        "--id",
+        type=int,
+        help="특정 뉴스 ID만 AI 요약합니다."
+    )
+
+    summarize_parser.add_argument(
+        "--unsummarized",
+        action="store_true",
+        help="아직 요약되지 않은 뉴스만 AI 요약합니다."
     )
 
     # 뉴스 종합 분석 명령어
@@ -175,11 +193,61 @@ def main():
 
         clean_news_data = load_jsonl(latest_clean_file)
 
-        # 현재는 Mock 요약 사용
-        # TODO: OpenAI API 연결 시 summarizer.py의 Mock 부분을 실제 API 호출로 교체
+        # 기존 Summary 파일 확인
+        summary_file_name = latest_clean_file.name.replace(
+            "news_clean_", "news_summary_"
+        )
+        existing_summary_file = Path("data/summary") / summary_file_name
+
+        if existing_summary_file.exists():
+            existing_summary_data = load_jsonl(existing_summary_file)
+        else:
+            existing_summary_data = []
+
+        # 이미 요약된 뉴스의 링크 목록
+        summarized_links = {
+            news["link"]
+            for news in existing_summary_data
+            if news.get("link")
+        }
+
+        # --id 옵션: 특정 뉴스 1건 선택
+        if args.id is not None:
+            news_id = args.id
+
+            if news_id < 1 or news_id > len(clean_news_data):
+                logger.error(f"존재하지 않는 뉴스 ID입니다: {news_id}")
+                return
+
+            selected_news = clean_news_data[news_id - 1]
+
+            if selected_news.get("link") in summarized_links:
+                logger.info(f"이미 요약된 뉴스입니다: ID {news_id}")
+                return
+
+            clean_news_data = [selected_news]
+
+        # --unsummarized 옵션: 아직 요약되지 않은 뉴스만 선택
+        elif args.unsummarized:
+            clean_news_data = [
+                news
+                for news in clean_news_data
+                if news.get("link") not in summarized_links
+            ]
+
+            if not clean_news_data:
+                logger.info("요약되지 않은 뉴스가 없습니다.")
+                return
+
         summarized_news_list = summarize_news_list(
             clean_news_data
         )
+
+        # 기존 요약 결과와 새 요약 결과 합치기
+        if not args.all:
+            summarized_news_list = (
+                existing_summary_data + summarized_news_list
+            )
 
         summary_file_path = save_summary_news(
             summarized_news_list,
@@ -189,8 +257,10 @@ def main():
         logger.info(f"요약 대상 파일: {latest_clean_file}")
         logger.info(f"요약 대상 뉴스: {len(clean_news_data)}건")
         logger.info(f"요약 완료: {len(summarized_news_list)}건")
-        logger.info(f"Summary 데이터 저장 완료: {summary_file_path}")
-
+        logger.info(
+            f"Summary 데이터 저장 완료: {summary_file_path}"
+        )
+        
     # Analyze
     elif args.command == "analyze":
         summary_files = list(
