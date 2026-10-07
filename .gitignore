@@ -9,7 +9,7 @@ __pycache__/
 .env
 
 # 설정 파일
-config.json
+
 
 # VSCode 개인 설정
 .vscode/

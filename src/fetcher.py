@@ -1,13 +1,20 @@
 import feedparser
+import requests
 
-
-GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
+from src.config import load_config
 
 
 def fetch_rss_news(limit=10):
     """Google News RSS에서 뉴스를 수집합니다."""
 
-    feed = feedparser.parse(GOOGLE_NEWS_RSS_URL)
+    config = load_config()
+    rss_url = config["news"]["rss_url"]
+    timeout = config["request"]["timeout"]
+
+    response = requests.get(rss_url, timeout=timeout)
+    response.raise_for_status()
+
+    feed = feedparser.parse(response.content)
 
     news_list = []
 

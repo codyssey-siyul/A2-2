@@ -18,12 +18,15 @@ from src.visualizer import create_news_charts
 from src.reporter import generate_markdown_report, save_markdown_report
 from src.exporter import export_news_data
 from src.logger import setup_logger
+from src.config import load_config
 
 
 logger = setup_logger()
 
 
 def main():
+    config = load_config()
+
     parser = argparse.ArgumentParser(
         description="AI 뉴스 트렌드 분석 데이터 파이프라인"
     )
@@ -39,7 +42,7 @@ def main():
     fetch_parser.add_argument(
         "--limit",
         type=int,
-        default=10,
+        default=config["news"]["default_limit"],
         help="수집할 뉴스 개수"
     )
 

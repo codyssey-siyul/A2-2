@@ -1,0 +1,15 @@
+{
+    "news": {
+        "rss_url": "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko",
+        "default_limit": 10
+    },
+    "cleaning": {
+        "duplicate_policy": "skip"
+    },
+    "request": {
+        "timeout": 10
+    },
+    "ai": {
+        "model": "gpt-5-mini"
+    }
+}

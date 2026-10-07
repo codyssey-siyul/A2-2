@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 
+from src.config import load_config
 
 def normalize_text(text):
     """불필요한 공백과 줄바꿈을 정리합니다."""
@@ -57,6 +58,9 @@ def clean_news(news):
 def clean_news_list(news_list):
     """뉴스 목록 전체를 정제하고 중복을 제거합니다."""
 
+    config = load_config()
+    duplicate_policy = config["cleaning"]["duplicate_policy"]
+
     cleaned_list = []
     seen_links = set()
 
@@ -69,7 +73,8 @@ def clean_news_list(news_list):
 
         # 동일한 링크의 뉴스는 중복으로 판단
         if cleaned_news["link"] in seen_links:
-            continue
+            if duplicate_policy == "skip":
+                continue
 
         seen_links.add(cleaned_news["link"])
         cleaned_list.append(cleaned_news)
