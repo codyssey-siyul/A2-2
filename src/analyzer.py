@@ -1,4 +1,5 @@
 from collections import Counter
+import re
 
 import os
 import requests
@@ -123,10 +124,14 @@ def analyze_news(news_list):
             continue
 
         if current_section == "major_issues":
-            major_issues.append(line.lstrip("- ").strip())
+            major_issues.append(
+               re.sub(r"^\d+[\)\.]\s*", "", line.lstrip("- ").strip())
+            )
 
         elif current_section == "trends":
-            trends.append(line.lstrip("- ").strip())
+            trends.append(
+                re.sub(r"^\d+[\)\.]\s*", "", line.lstrip("- ").strip())
+            )
 
         elif current_section == "keywords":
             keywords.extend(
@@ -136,7 +141,9 @@ def analyze_news(news_list):
             )
 
         elif current_section == "insights":
-            insights.append(line.lstrip("- ").strip())
+            insights.append(
+                re.sub(r"^\d+[\)\.]\s*", "", line.lstrip("- ").strip())
+            )
     
     analysis_result = {
         "total_news": total_news,

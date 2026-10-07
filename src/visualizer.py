@@ -13,87 +13,65 @@ def create_news_charts(news_list):
     """
     뉴스 데이터를 이용해 차트 2종을 생성합니다.
 
-    현재:
-    1. 출처별 뉴스 건수
-    2. 게시일별 뉴스 건수
-
-    TODO:
-    OpenAI API 연결 후 실제 category가 생성되면
-    2번 차트를 '카테고리별 뉴스 건수'로 교체합니다.
+    1. 카테고리별 뉴스 건수
+    2. 일별 뉴스 수집 추이
     """
 
     CHART_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ------------------------------------------------------------
-    # 차트 1: 출처별 뉴스 건수
-    # ------------------------------------------------------------
-
-    source_counts = Counter(
-        news.get("source", "알 수 없음")
+    category_counts = Counter(
+        news.get("category", "미분류")
         for news in news_list
     )
 
     plt.figure(figsize=(10, 6))
 
     plt.bar(
-        source_counts.keys(),
-        source_counts.values()
+        category_counts.keys(),
+        category_counts.values()
     )
 
-    plt.title("News Count by Source")
-    plt.xlabel("Source")
-    plt.ylabel("News Count")
+    plt.title("카테고리별 뉴스 건수")
+    plt.xlabel("카테고리")
+    plt.ylabel("뉴스 건수")
     plt.xticks(rotation=30, ha="right")
     plt.tight_layout()
 
-    source_chart_path = CHART_DIR / "news_by_source.png"
+    category_chart_path = CHART_DIR / "news_by_category.png"
 
-    plt.savefig(source_chart_path)
+    plt.savefig(category_chart_path)
     plt.close()
 
-    # ============================================================
-    # [TEMP CHART START]
-    #
-    # 현재 Mock summarize에서는 모든 category가 "테스트"이므로
-    # 임시로 게시일별 뉴스 건수를 시각화합니다.
-    #
-    # TODO: OpenAI API 연결 후 이 부분을
-    #       '카테고리별 뉴스 건수' 차트로 교체
-    # ============================================================
 
-    published_counts = Counter(
-        news.get("published", "알 수 없음")[:10]
+    daily_counts = Counter(
+        news.get("collected_at", "알 수 없음")[:10]
         for news in news_list
     )
 
-    published_counts = dict(
-        sorted(published_counts.items())
+    daily_counts = dict(
+        sorted(daily_counts.items())
     )
 
     plt.figure(figsize=(10, 6))
 
-    plt.bar(
-        published_counts.keys(),
-        published_counts.values()
+    plt.plot(
+        daily_counts.keys(),
+        daily_counts.values(),
+        marker="o"
     )
 
-    plt.title("News Count by Published Date")
-    plt.xlabel("Published Date")
-    plt.ylabel("News Count")
+    plt.title("일별 뉴스 수집 추이")
+    plt.xlabel("수집일")
+    plt.ylabel("뉴스 건수")
     plt.xticks(rotation=30, ha="right")
     plt.tight_layout()
 
-    second_chart_path = CHART_DIR / "news_by_date.png"
+    daily_chart_path = CHART_DIR / "news_daily_trend.png"
 
-    plt.savefig(second_chart_path)
+    plt.savefig(daily_chart_path)
     plt.close()
-
-    # ============================================================
-    # [TEMP CHART END]
-    # OpenAI API 연결 후 위 영역을 카테고리 차트로 교체
-    # ============================================================
 
     return {
-        "source_chart": source_chart_path,
-        "second_chart": second_chart_path,
+        "category_chart": category_chart_path,
+        "daily_chart": daily_chart_path,
     }

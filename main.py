@@ -373,8 +373,8 @@ def main():
 
         logger.info(f"차트 대상 파일: {latest_summary_file}")
         logger.info(f"차트 대상 뉴스: {len(summarized_news_list)}건")
-        logger.info(f"출처별 차트 저장 완료: {chart_paths['source_chart']}")
-        logger.info(f"두 번째 차트 저장 완료: {chart_paths['second_chart']}")
+        logger.info(f"카테고리별 차트 저장 완료: {chart_paths['category_chart']}")
+        logger.info(f"일별 수집 추이 차트 저장 완료: {chart_paths['daily_chart']}")
 
     # Report
     elif args.command == "report":

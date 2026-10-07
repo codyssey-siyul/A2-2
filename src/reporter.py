@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 REQUIRED_FIELDS = [
     "title",
@@ -178,13 +179,13 @@ def generate_markdown_report(news_list, analysis_result):
     lines.append("### 주요 이슈")
     lines.append("")
     for item in analysis_result.get("major_issues", []):
-        lines.append(f"- {item}")
+        lines.append(f"- {re.sub(r'^\d+[\)\.]\s*', '', item)}")
     lines.append("")
 
     lines.append("### 주요 트렌드")
     lines.append("")
     for item in analysis_result.get("trends", []):
-        lines.append(f"- {item}")
+        lines.append(f"- {re.sub(r'^\d+[\)\.]\s*', '', item)}")
     lines.append("")
 
     lines.append("### 핵심 키워드")
@@ -196,24 +197,21 @@ def generate_markdown_report(news_list, analysis_result):
     lines.append("### 시사점")
     lines.append("")
     for item in analysis_result.get("insights", []):
-        lines.append(f"- {item}")
+        lines.append(f"- {re.sub(r'^\d+[\)\.]\s*', '', item)}")
     lines.append("")
 
     # 5. 시각화
     lines.append("## 5. 시각화")
     lines.append("")
-    lines.append("### 출처별 뉴스 건수")
+
+    lines.append("### 카테고리별 뉴스 건수")
     lines.append("")
-    lines.append("![출처별 뉴스 건수](../charts/news_by_source.png)")
+    lines.append("![카테고리별 뉴스 건수](../charts/news_by_category.png)")
     lines.append("")
 
-    # TODO:
-    # OpenAI API 연결 후 실제 category가 생성되면
-    # 아래 게시일별 차트와 함께 카테고리별 뉴스 차트를
-    # 과제 최종 요구사항에 맞게 반영
-    lines.append("### 일자별 뉴스 건수")
+    lines.append("### 일별 뉴스 수집 추이")
     lines.append("")
-    lines.append("![일자별 뉴스 건수](../charts/news_by_date.png)")
+    lines.append("![일별 뉴스 수집 추이](../charts/news_daily_trend.png)")
     lines.append("")
 
     return "\n".join(lines)
