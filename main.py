@@ -107,9 +107,15 @@ def main():
     )
 
     # 뉴스 데이터 내보내기 명령어
-    subparsers.add_parser(
+    export_parser = subparsers.add_parser(
         "export",
         help="뉴스 데이터를 CSV와 JSONL 형식으로 내보냅니다."
+    )
+
+    export_parser.add_argument(
+        "--status",
+        choices=["summarized"],
+        help="요약이 완료된 뉴스만 내보냅니다."
     )
 
     crawl_parser = subparsers.add_parser(
@@ -240,7 +246,7 @@ def main():
             clean_news_data = [selected_news]
 
         # --unsummarized 옵션: 아직 요약되지 않은 뉴스만 선택
-        elif args.unsummarized:
+        elif not args.all:
             clean_news_data = [
                 news
                 for news in clean_news_data
@@ -457,6 +463,13 @@ def main():
         summarized_news_list = load_jsonl(
             latest_summary_file
         )
+
+        # 요약 완료된 뉴스만 필터링
+        if args.status == "summarized":
+            summarized_news_list = [
+                news for news in summarized_news_list
+                if news.get("summary", "").strip()
+            ]
 
         # CSV + JSONL 내보내기
         export_result = export_news_data(
