@@ -72,28 +72,30 @@ def clean_news(news):
 
     return cleaned_news
 
+
 def clean_news_list(news_list):
-    """뉴스 목록 전체를 정제하고 중복을 제거합니다."""
+    """뉴스 목록을 정제하고 설정된 중복 정책을 적용합니다."""
 
     config = load_config()
     duplicate_policy = config["cleaning"]["duplicate_policy"]
 
-    cleaned_list = []
-    seen_links = set()
+    if duplicate_policy not in ("skip", "upsert"):
+        raise ValueError(f"지원하지 않는 중복 정책: {duplicate_policy}")
+
+    cleaned_by_link = {}
 
     for news in news_list:
         cleaned_news = clean_news(news)
 
-        # 필수값 누락 등으로 정제되지 않은 데이터 제외
         if cleaned_news is None:
             continue
 
-        # 동일한 링크의 뉴스는 중복으로 판단
-        if cleaned_news["link"] in seen_links:
-            if duplicate_policy == "skip":
-                continue
+        link = cleaned_news["link"]
 
-        seen_links.add(cleaned_news["link"])
-        cleaned_list.append(cleaned_news)
+        if duplicate_policy == "skip" and link in cleaned_by_link:
+            continue
 
-    return cleaned_list
+        # upsert 정책에서는 동일 링크의 최신 입력값으로 갱신
+        cleaned_by_link[link] = cleaned_news
+
+    return list(cleaned_by_link.values())
