@@ -71,7 +71,7 @@ def calculate_report_metrics(news_list):
     content_count = sum(
         1
         for news in news_list
-        if news.get("content", "").strip()
+        if str(news.get("content") or "").strip()
     )
 
     content_rate = round(

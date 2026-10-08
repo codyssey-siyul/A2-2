@@ -13,22 +13,39 @@ def normalize_text(text):
 
 
 def normalize_date(date_text):
-    """RSS 또는 크롤링 날짜를 ISO 8601 형식으로 변환합니다."""
+    """RSS, 크롤링, ISO 8601 날짜를 표준 형식으로 변환합니다."""
     if not date_text:
         return None
 
-    # RSS 날짜 형식 처리
+    date_text = str(date_text).strip()
+
+    # RSS 날짜 형식
     try:
         parsed_date = parsedate_to_datetime(date_text)
         return parsed_date.isoformat()
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, IndexError):
         pass
 
-    # 크롤링 날짜 형식 처리: 2026.10.01
+    # 날짜만 있는 경우 시간 정보 없이 유지
+    try:
+        return datetime.strptime(date_text, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        pass
+
+    # ISO 8601 날짜/시간
+    try:
+        parsed_date = datetime.fromisoformat(
+            date_text.replace("Z", "+00:00")
+        )
+        return parsed_date.isoformat()
+    except ValueError:
+        pass
+
+    # 크롤링 날짜 형식
     try:
         parsed_date = datetime.strptime(date_text, "%Y.%m.%d")
         return parsed_date.date().isoformat()
-    except (TypeError, ValueError):
+    except ValueError:
         return None
 
 

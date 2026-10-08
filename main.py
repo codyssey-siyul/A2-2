@@ -1,6 +1,7 @@
 import argparse
 import json
 from pathlib import Path
+from datetime import datetime
 
 from src.fetcher import fetch_rss_news
 from src.storage import (
@@ -118,6 +119,13 @@ def main():
         help="요약이 완료된 뉴스만 내보냅니다."
     )
 
+    export_parser.add_argument(
+        "--format",
+        choices=["csv", "jsonl", "all"],
+        default="all",
+        help="내보낼 파일 형식을 선택합니다. (기본값: all)"
+    )
+
     crawl_parser = subparsers.add_parser(
     "crawl",
     help="정책브리핑 뉴스를 웹 크롤링합니다."
@@ -132,6 +140,22 @@ def main():
 
     args = parser.parse_args()
 
+
+    # analyze 명령어의 날짜 옵션 유효성 검사
+    if args.command == "analyze" and args.date:
+        try:
+            datetime.strptime(args.date, "%Y-%m-%d")
+
+            # YYYY-MM-DD 형식인지 정확히 확인
+            if len(args.date) != 10:
+                raise ValueError
+
+        except ValueError:
+            parser.error(
+                "--date는 실제 존재하는 날짜를 YYYY-MM-DD 형식으로 입력해야 합니다."
+            )
+
+
     # Fetch
     if args.command == "fetch":
         logger.info(f"뉴스 수집 시작: 최대 {args.limit}건")
@@ -141,6 +165,7 @@ def main():
 
             if not news_list:
                 logger.warning("수집된 뉴스가 없습니다.")
+                return
             else:
                 for index, news in enumerate(news_list, start=1):
                     print(f"\n[{index}] {news['title']}")
@@ -471,16 +496,20 @@ def main():
                 if news.get("summary", "").strip()
             ]
 
-        # CSV + JSONL 내보내기
+        # 선택한 형식으로 내보내기
         export_result = export_news_data(
             summarized_news_list,
-            latest_summary_file
+            latest_summary_file,
+            export_format=args.format
         )
 
         logger.info(f"Export 대상 파일: {latest_summary_file}")
         logger.info(f"Export 대상 뉴스: {len(summarized_news_list)}건")
-        logger.info(f"CSV 저장 완료: {export_result['csv']}")
-        logger.info(f"JSONL 저장 완료: {export_result['jsonl']}")
+
+        for file_format, file_path in export_result.items():
+            logger.info(f"{file_format.upper()} 저장 완료: {file_path}")
+
+
 
     elif args.command == "crawl":
         logger.info(f"웹 크롤링 시작: 최대 {args.limit}건")

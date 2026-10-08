@@ -19,6 +19,11 @@ def summarize_news(news):
     load_dotenv()
 
     api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError(
+        "OPENAI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요."
+    )
+
     config = load_config()
     prompt = f"""
 다음 뉴스 기사를 분석해주세요.
@@ -51,7 +56,14 @@ def summarize_news(news):
 
     response.raise_for_status()
 
-    ai_result = response.json()["choices"][0]["message"]["content"]
+    response_data = response.json()
+
+    try:
+        ai_result = response_data["choices"][0]["message"]["content"]
+        if not isinstance(ai_result, str) or not ai_result.strip():
+            raise ValueError("AI 응답 내용이 비어 있습니다.")
+    except (KeyError, IndexError, TypeError) as e:
+        raise ValueError("AI 응답 형식이 올바르지 않습니다.") from e
     
     summary = ""
     category = ""
@@ -68,7 +80,25 @@ def summarize_news(news):
 
         elif line.startswith("중요도:"):
             importance_text = line.replace("중요도:", "", 1).strip()
-            importance = int(importance_text)
+            try:
+                importance = int(importance_text)
+                if not 1 <= importance <= 5:
+                    raise ValueError
+            except ValueError:
+                raise ValueError(
+                    f"AI 중요도 값이 올바르지 않습니다: {importance_text}"
+                )
+
+    allowed_categories = {
+        "정치", "경제", "사회", "국제",
+        "문화", "스포츠", "IT/과학"
+    }
+
+    if not summary:
+        raise ValueError("AI 요약문이 누락되었습니다.")
+
+    if category not in allowed_categories:
+        raise ValueError(f"AI 카테고리가 올바르지 않습니다: {category}")
 
     summarized_news = news.copy()
 
