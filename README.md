@@ -34,7 +34,7 @@ RSS 및 웹 크롤링을 통해 뉴스를 수집하고, 데이터를 정제한 �
 - Visual Studio Code
 - Python 가상환경 (`venv`)
 - PowerShell
-- Codyssey AI API
+- Codyssey API(OpenAI)
 - Git / GitHub
 
 주요 Python 패키지는 `requirements.txt`에서 관리합니다.
@@ -122,13 +122,13 @@ python main.py --help
 ### 6.1 RSS 뉴스 수집
 
 ```powershell
-python main.py fetch --limit 5
+python main.py fetch --limit 10
 ```
 
 ### 6.2 웹 크롤링
 
 ```powershell
-python main.py crawl --limit 5
+python main.py crawl --limit 10
 ```
 
 ### 6.3 데이터 정제
