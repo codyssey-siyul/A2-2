@@ -68,7 +68,8 @@ A2-2/
 │   └── analysis/
 └── output/
     ├── charts/
-    └── reports/
+    ├── reports/
+    └── exports/
 ```
 
 `.env`와 `.venv`는 로컬 실행 환경에서 사용하는 파일 및 폴더이며, API 키가 포함된 `.env`는 GitHub에 업로드하지 않습니다.

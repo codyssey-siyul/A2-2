@@ -1,3 +1,4 @@
+import time
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -108,7 +109,15 @@ def fetch_policy_news(limit=5):
     news_list = []
     collected_at = datetime.now(timezone.utc).isoformat()
 
-    for item in news_links:
+    # 목록 페이지 요청 후 첫 번째 기사 요청 전 대기
+    if news_links:
+        time.sleep(1)
+
+    for index, item in enumerate(news_links):
+        # 첫 번째 기사 이후부터 요청 사이에 1초 대기
+        if index > 0:
+            time.sleep(1)
+
         # 개별 기사에서 본문 + 작성일 수집
         article = fetch_policy_news_article(item["link"])
 
